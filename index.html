@@ -1302,9 +1302,9 @@ const fartNames = {
 // ─── Easter eggs ───
 const eggs = [
   { at: 1,   badge: null, msg: '💨 And so it begins...', color: null },
-  { at: 5,   badge: { label: '💨 Rookie Ripper', bg: '#555', color: '#fff' }, msg: '5 rips! You're warming up 🔥', color: '#ff6b35' },
+  { at: 5,   badge: { label: '💨 Rookie Ripper', bg: '#555', color: '#fff' }, msg: '5 rips! You\'re warming up 🔥', color: '#ff6b35' },
   { at: 10,  badge: null, msg: '🐭 SQUEAKY unlocked! New fart type added to rotation', color: '#00cfff' },
-  { at: 15,  badge: null, msg: '😂 Your family has noticed. They've moved to another room.', color: '#ffcf00' },
+  { at: 15,  badge: null, msg: '😂 Your family has noticed. They\'ve moved to another room.', color: '#ffcf00' },
   { at: 20,  badge: { label: '🌿 Green Cloud', bg: '#2d8a4e', color: '#fff' }, msg: '20 rips! The cloud is visible from space.', color: '#7bff61' },
   { at: 25,  badge: null, msg: '🎵 Scientists are studying your output. For science.', color: '#ff6fd8' },
   { at: 30,  badge: null, msg: '💦 WET ONE unlocked! Tread carefully.', color: '#4da6ff' },
@@ -1332,7 +1332,7 @@ function updateNextEggHint(count) {
   if (next) {
     nextEggHint.textContent = `Next surprise at ${next} rips (${next - count} to go)`;
   } else {
-    nextEggHint.textContent = 'You've found all the surprises. Keep going anyway. 💨';
+    nextEggHint.textContent = 'You\'ve found all the surprises. Keep going anyway. 💨';
   }
 }
 
