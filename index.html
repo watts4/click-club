@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Click Club ✨</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --hue: 260;
+      --bg: hsl(var(--hue), 30%, 12%);
+      --card: hsl(var(--hue), 20%, 18%);
+      --accent: hsl(var(--hue), 80%, 65%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: #f0f0f0;
+      min-height: 100vh;
+      transition: background 0.5s;
+      padding-bottom: 60px;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+    header h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      background: linear-gradient(135deg, #ff6fd8, #7b61ff, #00cfff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    header p { color: #aaa; font-size: 1rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .card h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    /* ── Big Button ── */
+    #big-btn {
+      width: 100%;
+      height: 130px;
+      border-radius: 20px;
+      border: none;
+      font-size: 2rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff6fd8, #7b61ff);
+      color: white;
+      box-shadow: 0 6px 24px rgba(123,97,255,0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    #big-btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(123,97,255,0.3); }
+    #big-btn .click-count { font-size: 1rem; font-weight: 400; opacity: 0.8; }
+
+    /* ── Bubble Wrap ── */
+    #bubble-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+    }
+    .bubble {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(150,200,255,0.3));
+      border: 2px solid rgba(150,200,255,0.4);
+      cursor: pointer;
+      transition: transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .bubble:hover { transform: scale(1.08); }
+    .bubble.popped {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.08);
+      transform: scale(0.85);
+      cursor: default;
+    }
+    .bubble.popping {
+      animation: pop-anim 0.25s ease-out forwards;
+    }
+    @keyframes pop-anim {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.4); opacity: 0.6; }
+      100% { transform: scale(0.6); opacity: 0; }
+    }
+    #bubble-reset {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    #bubble-reset:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ── Toggles ── */
+    .toggle-list { display: flex; flex-direction: column; gap: 14px; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 28px;
+      background: #333;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    input:checked + .toggle-track { background: var(--toggle-color, #7b61ff); }
+    input:checked + .toggle-track::after { transform: translateX(24px); }
+
+    /* ── Piano ── */
+    #piano {
+      display: flex;
+      gap: 4px;
+      height: 100px;
+    }
+    .piano-key {
+      flex: 1;
+      border-radius: 0 0 10px 10px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.08s, filter 0.08s;
+      position: relative;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    }
+    .piano-key:active, .piano-key.pressed {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+      filter: brightness(0.85);
+    }
+    .piano-key .key-label {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: rgba(0,0,0,0.5);
+    }
+
+    /* ── Color Mixer ── */
+    .color-mixer-preview {
+      height: 80px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      letter-spacing: 0.05em;
+    }
+    .mixer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .mixer-label { font-size: 0.85rem; width: 14px; font-weight: 700; }
+    .mixer-row input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    .mixer-row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+    #r-slider { background: linear-gradient(to right, #222, #ff4444); }
+    #g-slider { background: linear-gradient(to right, #222, #44ff44); }
+    #b-slider { background: linear-gradient(to right, #222, #4444ff); }
+    .mixer-val { font-size: 0.8rem; color: #888; width: 28px; text-align: right; }
+
+    /* ── Spinner ── */
+    .spinner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    #spinner-disc {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: conic-gradient(#ff6fd8, #7b61ff, #00cfff, #7bff61, #ffcf00, #ff6fd8);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+      position: relative;
+    }
+    #spinner-disc::after {
+      content: '';
+      position: absolute;
+      inset: 20%;
+      border-radius: 50%;
+      background: var(--card);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+    }
+    #spinner-disc:hover { box-shadow: 0 8px 32px rgba(123,97,255,0.5); }
+    #spin-btn {
+      padding: 10px 28px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(135deg, #7b61ff, #00cfff);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0,200,255,0.3);
+    }
+    #spin-btn:active { transform: scale(0.95); }
+    #spin-speed { font-size: 0.85rem; color: #888; }
+
+    /* ── Fireworks ── */
+    #fireworks-zone {
+      height: 160px;
+      border-radius: 14px;
+      background: #0a0a1a;
+      border: 1px dashed rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: crosshair;
+      position: relative;
+      overflow: hidden;
+      color: #555;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+    #fireworks-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* ── Clap Counter ── */
+    .clap-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    #clap-btn {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #ffcf00, #ff6b35);
+      font-size: 2.5rem;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+      transition: transform 0.1s;
+      position: relative;
+    }
+    #clap-btn:active { transform: scale(0.88); }
+    #clap-count {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffcf00;
+    }
+    #clap-label { font-size: 0.85rem; color: #777; }
+
+    .float-up {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+      animation: floatup 0.8s ease-out forwards;
+      z-index: 999;
+    }
+    @keyframes floatup {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+
+    /* ── Theme hue ── */
+    .hue-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #hue-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(to right, hsl(0,70%,60%), hsl(60,70%,60%), hsl(120,70%,60%), hsl(180,70%,60%), hsl(240,70%,60%), hsl(300,70%,60%), hsl(360,70%,60%));
+      outline: none;
+      cursor: pointer;
+    }
+    #hue-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .hue-swatches {
+      display: flex;
+      gap: 8px;
+    }
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .swatch:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.4); }
+
+    footer {
+      text-align: center;
+      color: #444;
+      font-size: 0.8rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✨ Click Club ✨</h1>
+  <p>For people who just really like clicking things</p>
+</header>
+
+<div class="grid">
+
+  <!-- Big Button -->
+  <div class="card">
+    <h2>The Big Button</h2>
+    <button id="big-btn">
+      <span id="big-btn-emoji">🎉</span>
+      <span class="click-count"><span id="click-count">0</span> clicks</span>
+    </button>
+  </div>
+
+  <!-- Bubble Wrap -->
+  <div class="card">
+    <h2>Bubble Wrap</h2>
+    <div id="bubble-grid"></div>
+    <button id="bubble-reset">↺ Refresh bubbles</button>
+  </div>
+
+  <!-- Clap Button -->
+  <div class="card">
+    <h2>Applause Machine</h2>
+    <div class="clap-wrap">
+      <button id="clap-btn">👏</button>
+      <div id="clap-count">0</div>
+      <div id="clap-label">claps</div>
+    </div>
+  </div>
+
+  <!-- Piano -->
+  <div class="card">
+    <h2>Tiny Piano</h2>
+    <div id="piano"></div>
+  </div>
+
+  <!-- Toggles -->
+  <div class="card">
+    <h2>Satisfying Toggles</h2>
+    <div class="toggle-list" id="toggle-list"></div>
+  </div>
+
+  <!-- Color Mixer -->
+  <div class="card">
+    <h2>Color Mixer</h2>
+    <div class="color-mixer-preview" id="color-preview">#7b61ff</div>
+    <div class="mixer-row">
+      <span class="mixer-label" style="color:#ff6666">R</span>
+      <input type="range" id="r-slider" min="0" max="255" value="123" />
+      <span class="mixer-val" id="r-val">123</span>
+    </div>
+    <div class="mixer-row">
+      <span class="mixer-label" style="color:#66ff66">G</span>
+      <input type="range" id="g-slider" min="0" max="255" value="97" />
+      <span class="mixer-val" id="g-val">97</span>
+    </div>
+    <div class="mixer-row">
+      <span class="mixer-label" style="color:#6699ff">B</span>
+      <input type="range" id="b-slider" min="0" max="255" value="255" />
+      <span class="mixer-val" id="b-val">255</span>
+    </div>
+  </div>
+
+  <!-- Spinner -->
+  <div class="card">
+    <h2>Spin It</h2>
+    <div class="spinner-wrap">
+      <div id="spinner-disc"></div>
+      <button id="spin-btn">🌀 SPIN!</button>
+      <div id="spin-speed">Click to spin</div>
+    </div>
+  </div>
+
+  <!-- Fireworks -->
+  <div class="card">
+    <h2>Fireworks</h2>
+    <div id="fireworks-zone">
+      <canvas id="fireworks-canvas"></canvas>
+      <span id="fw-hint">Click anywhere in here 🎆</span>
+    </div>
+  </div>
+
+  <!-- Theme -->
+  <div class="card">
+    <h2>Vibe Control</h2>
+    <div class="hue-wrap">
+      <input type="range" id="hue-slider" min="0" max="360" value="260" />
+      <div class="hue-swatches" id="swatches"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer style="margin-top: 48px;">made for clicking ✨</footer>
+
+<script>
+// ── Audio Context ──────────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, type = 'sine', duration = 0.3, vol = 0.18) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function playPop() {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.15);
+}
+
+function playClap() {
+  // White noise burst
+  const bufferSize = audioCtx.sampleRate * 0.1;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 1200;
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  source.start();
+  source.stop(audioCtx.currentTime + 0.15);
+}
+
+// ── Big Button ─────────────────────────────────────────────────
+let clicks = 0;
+const emojis = ['🎉','🌟','💥','🔥','✨','🎊','🚀','💫','🎈','⚡'];
+const bigBtn = document.getElementById('big-btn');
+const clickCountEl = document.getElementById('click-count');
+const bigBtnEmoji = document.getElementById('big-btn-emoji');
+
+bigBtn.addEventListener('click', (e) => {
+  clicks++;
+  clickCountEl.textContent = clicks;
+  bigBtnEmoji.textContent = emojis[clicks % emojis.length];
+  playTone(440 + (clicks % 8) * 55, 'triangle', 0.25);
+
+  const rect = bigBtn.getBoundingClientRect();
+  confetti({
+    particleCount: 40 + Math.min(clicks * 2, 80),
+    spread: 60,
+    origin: {
+      x: (rect.left + rect.width / 2) / window.innerWidth,
+      y: (rect.top + rect.height / 2) / window.innerHeight,
+    },
+    colors: ['#ff6fd8','#7b61ff','#00cfff','#ffcf00','#7bff61'],
+  });
+
+  // milestone
+  if (clicks === 10) bigBtn.style.background = 'linear-gradient(135deg, #00cfff, #7bff61)';
+  if (clicks === 25) bigBtn.style.background = 'linear-gradient(135deg, #ffcf00, #ff6b35)';
+  if (clicks === 50) {
+    bigBtn.style.background = 'linear-gradient(135deg, #ff6fd8, #7b61ff, #00cfff)';
+    confetti({ particleCount: 200, spread: 100, origin: { x: 0.5, y: 0.5 } });
+  }
+});
+
+// ── Bubble Wrap ────────────────────────────────────────────────
+const bubbleGrid = document.getElementById('bubble-grid');
+function buildBubbles() {
+  bubbleGrid.innerHTML = '';
+  for (let i = 0; i < 80; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const hue = Math.floor(Math.random() * 360);
+    b.style.background = `radial-gradient(circle at 35% 35%, hsla(${hue},80%,85%,0.6), hsla(${hue},60%,60%,0.2))`;
+    b.style.borderColor = `hsla(${hue},70%,70%,0.5)`;
+    b.addEventListener('click', () => {
+      if (b.classList.contains('popped')) return;
+      b.classList.add('popping');
+      playPop();
+      setTimeout(() => b.classList.add('popped'), 200);
+    });
+    bubbleGrid.appendChild(b);
+  }
+}
+buildBubbles();
+document.getElementById('bubble-reset').addEventListener('click', buildBubbles);
+
+// ── Clap ──────────────────────────────────────────────────────
+let claps = 0;
+const clapBtn = document.getElementById('clap-btn');
+const clapCount = document.getElementById('clap-count');
+
+clapBtn.addEventListener('click', (e) => {
+  claps++;
+  clapCount.textContent = claps;
+  playClap();
+
+  const el = document.createElement('div');
+  el.className = 'float-up';
+  el.textContent = '+1 👏';
+  el.style.left = (e.clientX - 20) + 'px';
+  el.style.top = (e.clientY - 20) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+});
+
+// ── Piano ─────────────────────────────────────────────────────
+const notes = [
+  { freq: 261.63, label: 'C', color: '#ff6fd8' },
+  { freq: 293.66, label: 'D', color: '#b06eff' },
+  { freq: 329.63, label: 'E', color: '#7b61ff' },
+  { freq: 349.23, label: 'F', color: '#4da6ff' },
+  { freq: 392.00, label: 'G', color: '#00cfff' },
+  { freq: 440.00, label: 'A', color: '#00e5a0' },
+  { freq: 493.88, label: 'B', color: '#7bff61' },
+  { freq: 523.25, label: 'C\'', color: '#ffcf00' },
+];
+const piano = document.getElementById('piano');
+notes.forEach(n => {
+  const key = document.createElement('button');
+  key.className = 'piano-key';
+  key.style.background = n.color;
+  key.innerHTML = `<span class="key-label">${n.label}</span>`;
+  key.addEventListener('mousedown', () => {
+    playTone(n.freq, 'triangle', 0.5, 0.2);
+    key.classList.add('pressed');
+  });
+  key.addEventListener('mouseup', () => key.classList.remove('pressed'));
+  key.addEventListener('mouseleave', () => key.classList.remove('pressed'));
+  piano.appendChild(key);
+});
+
+// ── Toggles ───────────────────────────────────────────────────
+const toggleDefs = [
+  { label: '🌈 Rainbow mode', color: '#ff6fd8' },
+  { label: '🌙 Vibes', color: '#7b61ff' },
+  { label: '⚡ Energy', color: '#ffcf00' },
+  { label: '🔥 Hot takes', color: '#ff6b35' },
+  { label: '✨ Sparkle', color: '#00cfff' },
+  { label: '🎵 Good music only', color: '#7bff61' },
+];
+const toggleList = document.getElementById('toggle-list');
+toggleDefs.forEach(def => {
+  const row = document.createElement('div');
+  row.className = 'toggle-row';
+  row.innerHTML = `
+    <span>${def.label}</span>
+    <label class="toggle-switch" style="--toggle-color:${def.color}">
+      <input type="checkbox" />
+      <span class="toggle-track"></span>
+    </label>
+  `;
+  const cb = row.querySelector('input');
+  cb.addEventListener('change', () => {
+    playTone(cb.checked ? 660 : 440, 'sine', 0.1, 0.1);
+    if (cb.checked) {
+      const label = row.querySelector('span');
+      label.style.color = def.color;
+    } else {
+      row.querySelector('span').style.color = '';
+    }
+  });
+  toggleList.appendChild(row);
+});
+
+// ── Color Mixer ───────────────────────────────────────────────
+function toHex(v) { return v.toString(16).padStart(2, '0'); }
+function updateColor() {
+  const r = document.getElementById('r-slider').value;
+  const g = document.getElementById('g-slider').value;
+  const b = document.getElementById('b-slider').value;
+  document.getElementById('r-val').textContent = r;
+  document.getElementById('g-val').textContent = g;
+  document.getElementById('b-val').textContent = b;
+  const hex = `#${toHex(+r)}${toHex(+g)}${toHex(+b)}`;
+  const preview = document.getElementById('color-preview');
+  preview.style.background = hex;
+  preview.textContent = hex.toUpperCase();
+  // Luminance for text contrast
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  preview.style.color = lum > 0.5 ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)';
+}
+['r-slider','g-slider','b-slider'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateColor);
+});
+updateColor();
+
+// ── Spinner ───────────────────────────────────────────────────
+let spinAngle = 0;
+let spinVelocity = 0;
+let spinAnimId = null;
+
+function spinLoop() {
+  if (Math.abs(spinVelocity) < 0.05) {
+    spinVelocity = 0;
+    document.getElementById('spin-speed').textContent = 'Stopped';
+    return;
+  }
+  spinVelocity *= 0.985;
+  spinAngle += spinVelocity;
+  document.getElementById('spinner-disc').style.transform = `rotate(${spinAngle}deg)`;
+  const rpm = Math.abs(spinVelocity * 60 / 6).toFixed(0);
+  document.getElementById('spin-speed').textContent = `${rpm} RPM`;
+  spinAnimId = requestAnimationFrame(spinLoop);
+}
+
+document.getElementById('spin-btn').addEventListener('click', () => {
+  cancelAnimationFrame(spinAnimId);
+  spinVelocity += (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random() * 12);
+  playTone(200, 'sawtooth', 0.3, 0.1);
+  spinLoop();
+});
+document.getElementById('spinner-disc').addEventListener('click', () => {
+  document.getElementById('spin-btn').click();
+});
+
+// ── Fireworks ─────────────────────────────────────────────────
+const fwZone = document.getElementById('fireworks-zone');
+const fwCanvas = document.getElementById('fireworks-canvas');
+const fwCtx = fwCanvas.getContext('2d');
+const fwHint = document.getElementById('fw-hint');
+let fwParticles = [];
+
+function resizeFwCanvas() {
+  fwCanvas.width = fwZone.offsetWidth;
+  fwCanvas.height = fwZone.offsetHeight;
+}
+resizeFwCanvas();
+window.addEventListener('resize', resizeFwCanvas);
+
+fwZone.addEventListener('click', (e) => {
+  fwHint.style.display = 'none';
+  const rect = fwZone.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const hue = Math.random() * 360;
+
+  playTone(300 + Math.random() * 200, 'sawtooth', 0.2, 0.08);
+
+  for (let i = 0; i < 60; i++) {
+    const angle = (Math.PI * 2 / 60) * i;
+    const speed = 2 + Math.random() * 4;
+    fwParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      decay: 0.02 + Math.random() * 0.015,
+      color: `hsl(${hue + Math.random() * 40},100%,${55 + Math.random() * 20}%)`,
+      size: 2 + Math.random() * 2,
+    });
+  }
+  if (!fwAnimRunning) fwAnimate();
+});
+
+let fwAnimRunning = false;
+function fwAnimate() {
+  fwAnimRunning = true;
+  fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+  fwParticles = fwParticles.filter(p => p.life > 0);
+  fwParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.07;
+    p.life -= p.decay;
+    fwCtx.globalAlpha = Math.max(0, p.life);
+    fwCtx.fillStyle = p.color;
+    fwCtx.beginPath();
+    fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    fwCtx.fill();
+  });
+  fwCtx.globalAlpha = 1;
+  if (fwParticles.length > 0) {
+    requestAnimationFrame(fwAnimate);
+  } else {
+    fwAnimRunning = false;
+    fwHint.style.display = '';
+  }
+}
+
+// ── Theme / Hue ───────────────────────────────────────────────
+const hueSlider = document.getElementById('hue-slider');
+const swatchesEl = document.getElementById('swatches');
+const presetHues = [0, 30, 120, 200, 260, 300];
+
+presetHues.forEach(h => {
+  const s = document.createElement('div');
+  s.className = 'swatch';
+  s.style.background = `hsl(${h}, 70%, 60%)`;
+  s.addEventListener('click', () => {
+    hueSlider.value = h;
+    setHue(h);
+    playTone(300 + h, 'sine', 0.1, 0.08);
+  });
+  swatchesEl.appendChild(s);
+});
+
+function setHue(h) {
+  document.documentElement.style.setProperty('--hue', h);
+  document.documentElement.style.setProperty('--bg', `hsl(${h}, 30%, 12%)`);
+  document.documentElement.style.setProperty('--card', `hsl(${h}, 20%, 18%)`);
+  document.documentElement.style.setProperty('--accent', `hsl(${h}, 80%, 65%)`);
+}
+
+hueSlider.addEventListener('input', () => setHue(hueSlider.value));
+</script>
+
+</body>
+</html>
