@@ -449,6 +449,131 @@
     }
     #cactus-reset:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
+
+    /* ── Fart Zone ── */
+    #fart-card {
+      grid-column: 1 / -1; /* full width */
+    }
+    #fart-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+    }
+    #whoopie {
+      width: 140px;
+      height: 100px;
+      background: radial-gradient(ellipse at 40% 40%, #e8724a, #c0392b);
+      border-radius: 50% 50% 55% 45% / 60% 60% 40% 40%;
+      box-shadow: 0 6px 20px rgba(192,57,43,0.5), inset 0 -4px 12px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s;
+      position: relative;
+      user-select: none;
+      border: 3px solid #a93226;
+    }
+    #whoopie::before {
+      content: '';
+      position: absolute;
+      top: 15%;
+      left: 20%;
+      width: 30%;
+      height: 18%;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: rotate(-25deg);
+    }
+    #whoopie::after {
+      content: '💨';
+      position: absolute;
+      right: -10px;
+      top: -8px;
+      font-size: 1.6rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    #whoopie.squished {
+      transform: scaleY(0.55) scaleX(1.18);
+      box-shadow: 0 2px 6px rgba(192,57,43,0.4);
+    }
+    #whoopie.farting::after { opacity: 1; }
+
+    #fart-type-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffcf00;
+      min-height: 1.6em;
+      text-align: center;
+    }
+    #fart-counter-wrap {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    #fart-count { color: #ff6fd8; font-weight: 700; font-size: 1.1rem; }
+
+    #fart-clouds {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .fart-cloud {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(180,220,100,0.35), rgba(100,180,50,0.0));
+      animation: cloud-rise 1.5s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes cloud-rise {
+      0%   { opacity: 0.8; transform: scale(0.3) translateY(0); }
+      50%  { opacity: 0.6; }
+      100% { opacity: 0;   transform: scale(1.8) translateY(-120px); }
+    }
+    .stink-line {
+      position: absolute;
+      font-size: 1.2rem;
+      animation: stink-rise 1.2s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes stink-rise {
+      0%   { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
+      100% { opacity: 0; transform: translateY(-80px) rotate(var(--r, 0deg)) scale(1.5); }
+    }
+
+    #easter-egg-banner {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffcf00, #ff6b35);
+      color: #1a1a1a;
+      font-weight: 800;
+      font-size: 1.05rem;
+      text-align: center;
+      display: none;
+      animation: egg-pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes egg-pop {
+      0%   { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .fart-badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 2px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .fart-badge.earned { opacity: 1; }
+    #badge-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 32px; }
+
+    #next-egg-hint { font-size: 0.75rem; color: #555; text-align: center; }
+
     footer {
       text-align: center;
       color: #444;
@@ -605,6 +730,21 @@
       </svg>
       <div id="cactus-status">20 pokies — click one to remove it 😬</div>
       <button id="cactus-reset">↺ Regrow pokies</button>
+    </div>
+  </div>
+
+
+  <!-- Fart Zone -->
+  <div class="card" id="fart-card">
+    <h2>💨 Fart Zone</h2>
+    <div id="fart-zone">
+      <div id="fart-clouds"></div>
+      <div id="fart-type-label">Click the whoopie cushion...</div>
+      <div id="whoopie" title="SIT ON IT"></div>
+      <div id="fart-counter-wrap">Total rips: <span id="fart-count">0</span></div>
+      <div id="badge-row"></div>
+      <div id="easter-egg-banner"></div>
+      <div id="next-egg-hint"></div>
     </div>
   </div>
 
@@ -1023,6 +1163,260 @@ cactusReset.addEventListener('click', () => {
   cactusReset.style.display = 'none';
   playTone(440, 'sine', 0.3, 0.15);
 });
+
+// ── Fart Zone ────────────────────────────────────────────────────
+let fartCount = 0;
+const fartCountEl = document.getElementById('fart-count');
+const fartTypeLabel = document.getElementById('fart-type-label');
+const whoopie = document.getElementById('whoopie');
+const fartClouds = document.getElementById('fart-clouds');
+const eggBanner = document.getElementById('easter-egg-banner');
+const badgeRow = document.getElementById('badge-row');
+const nextEggHint = document.getElementById('next-egg-hint');
+
+// ─── Fart synthesizer ───
+function synthFart(type) {
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+
+  if (type === 'classic') {
+    // Medium rumble: filtered noise
+    const len = ctx.sampleRate * 0.45;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass'; filter.frequency.value = 120; filter.Q.value = 0.8;
+    filter.frequency.linearRampToValueAtTime(60, now + 0.45);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.setValueAtTime(0.5, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    src.start(now); src.stop(now + 0.45);
+
+  } else if (type === 'squeaky') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(900, now);
+    osc.frequency.linearRampToValueAtTime(400, now + 0.06);
+    osc.frequency.linearRampToValueAtTime(700, now + 0.12);
+    osc.frequency.linearRampToValueAtTime(300, now + 0.18);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.start(now); osc.stop(now + 0.22);
+
+  } else if (type === 'wet') {
+    for (let b = 0; b < 5; b++) {
+      const t = now + b * 0.07;
+      const len = audioCtx.sampleRate * 0.06;
+      const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(len*0.3));
+      const src = audioCtx.createBufferSource(); src.buffer = buf;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass'; filter.frequency.value = 300 + b * 80;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      src.start(t); src.stop(t + 0.1);
+    }
+
+  } else if (type === 'low') {
+    const len = ctx.sampleRate * 0.9;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 80;
+    filter.frequency.linearRampToValueAtTime(40, now + 0.9);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.7, now);
+    gain.gain.setValueAtTime(0.6, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+    src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    src.start(now); src.stop(now + 0.9);
+
+  } else if (type === 'machinegun') {
+    const shots = 6 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < shots; i++) {
+      const t = now + i * 0.07;
+      const len = Math.floor(audioCtx.sampleRate * 0.055);
+      const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < len; j++) d[j] = (Math.random()*2-1);
+      const src = audioCtx.createBufferSource(); src.buffer = buf;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass'; filter.frequency.value = 100 + Math.random()*100;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      src.start(t); src.stop(t + 0.07);
+    }
+
+  } else if (type === 'royal') {
+    // Ascending fanfare of farts
+    const freqs = [80, 100, 130, 160];
+    freqs.forEach((f, i) => {
+      setTimeout(() => synthFart('low'), i * 180);
+    });
+    return; // recursive, skip rest
+
+  } else if (type === 'legendary') {
+    synthFart('low');
+    setTimeout(() => synthFart('machinegun'), 200);
+    setTimeout(() => synthFart('wet'), 800);
+    setTimeout(() => synthFart('squeaky'), 1100);
+    return;
+  }
+}
+
+// ─── Fart type selector ───
+function pickFartType(count) {
+  const unlocked = [];
+  unlocked.push('classic');
+  if (count >= 10) unlocked.push('squeaky');
+  if (count >= 30) unlocked.push('wet');
+  if (count >= 50) unlocked.push('low');
+  if (count >= 75) unlocked.push('machinegun');
+  if (count >= 99) unlocked.push('royal');
+  return unlocked[Math.floor(Math.random() * unlocked.length)];
+}
+
+const fartNames = {
+  classic: '💨 Classic Rip',
+  squeaky: '🐭 Squeaky',
+  wet: '💦 Wet One',
+  low: '🎺 Long & Low',
+  machinegun: '🔫 Machine Gun',
+  royal: '👑 The Royal',
+  legendary: '🌟 LEGENDARY',
+};
+
+// ─── Easter eggs ───
+const eggs = [
+  { at: 1,   badge: null, msg: '💨 And so it begins...', color: null },
+  { at: 5,   badge: { label: '💨 Rookie Ripper', bg: '#555', color: '#fff' }, msg: '5 rips! You're warming up 🔥', color: '#ff6b35' },
+  { at: 10,  badge: null, msg: '🐭 SQUEAKY unlocked! New fart type added to rotation', color: '#00cfff' },
+  { at: 15,  badge: null, msg: '😂 Your family has noticed. They've moved to another room.', color: '#ffcf00' },
+  { at: 20,  badge: { label: '🌿 Green Cloud', bg: '#2d8a4e', color: '#fff' }, msg: '20 rips! The cloud is visible from space.', color: '#7bff61' },
+  { at: 25,  badge: null, msg: '🎵 Scientists are studying your output. For science.', color: '#ff6fd8' },
+  { at: 30,  badge: null, msg: '💦 WET ONE unlocked! Tread carefully.', color: '#4da6ff' },
+  { at: 42,  badge: null, msg: '🌌 42 — the answer to life, the universe, and flatulence.', color: '#b06eff' },
+  { at: 50,  badge: { label: '🏅 Silver Fartist', bg: '#aaa', color: '#111' }, msg: '🎺 LONG & LOW unlocked! Feel the bass.', color: '#c0c0c0' },
+  { at: 69,  badge: null, msg: '😏 Nice.', color: '#ff6fd8' },
+  { at: 75,  badge: null, msg: '🔫 MACHINE GUN unlocked! Rapid fire engaged.', color: '#ff6b35' },
+  { at: 88,  badge: null, msg: '🕰️ Great Scott! Your output has reached 88 rips per... sitting.', color: '#ffcf00' },
+  { at: 99,  badge: null, msg: '👑 One more... THE ROYAL awaits.', color: '#b06eff' },
+  { at: 100, badge: { label: '🏆 Gold Fartist', bg: '#ffcf00', color: '#111' }, msg: '👑 ROYAL FART UNLOCKED! A true maestro.', color: '#ffcf00' },
+  { at: 150, badge: null, msg: '🌍 Your farts have altered the local atmosphere.', color: '#00e5a0' },
+  { at: 200, badge: { label: '💎 Diamond Fartist', bg: '#00cfff', color: '#111' }, msg: '💎 200 rips. You are beyond judgment.', color: '#00cfff' },
+  { at: 300, badge: null, msg: '🧬 A new organism has evolved in your wake.', color: '#7bff61' },
+  { at: 420, badge: null, msg: '🌿 420. The universe nods knowingly.', color: '#2d8a4e' },
+  { at: 500, badge: { label: '👑 Fart Legend', bg: 'linear-gradient(135deg,#ff6fd8,#7b61ff,#00cfff)', color: '#fff' }, msg: '🌟 500 RIPS. LEGENDARY STATUS ACHIEVED.', color: null, legendary: true },
+];
+
+const eggMap = {};
+eggs.forEach(e => { eggMap[e.at] = e; });
+
+const nextEggs = eggs.map(e => e.at).sort((a,b) => a-b);
+
+function updateNextEggHint(count) {
+  const next = nextEggs.find(n => n > count);
+  if (next) {
+    nextEggHint.textContent = `Next surprise at ${next} rips (${next - count} to go)`;
+  } else {
+    nextEggHint.textContent = 'You've found all the surprises. Keep going anyway. 💨';
+  }
+}
+
+function spawnCloud() {
+  const zone = document.getElementById('fart-zone');
+  const zRect = zone.getBoundingClientRect();
+  const whoopieRect = whoopie.getBoundingClientRect();
+  const cx = whoopieRect.left - zRect.left + whoopieRect.width / 2;
+  const cy = whoopieRect.top  - zRect.top  + whoopieRect.height / 2;
+  for (let i = 0; i < 3; i++) {
+    const el = document.createElement('div');
+    el.className = 'fart-cloud';
+    const size = 60 + Math.random() * 60;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = (cx - size/2 + (Math.random()-0.5)*40) + 'px';
+    el.style.top  = (cy - size/2 + (Math.random()-0.5)*20) + 'px';
+    el.style.animationDelay = (i * 0.12) + 's';
+    fartClouds.appendChild(el);
+    setTimeout(() => el.remove(), 1700);
+  }
+  // Stink squiggles
+  for (let i = 0; i < 2; i++) {
+    const s = document.createElement('div');
+    s.className = 'stink-line';
+    s.textContent = ['〰️','💨','✨','🌿'][Math.floor(Math.random()*4)];
+    s.style.left = (cx + (Math.random()-0.5)*60) + 'px';
+    s.style.top  = (cy - 10) + 'px';
+    s.style.setProperty('--r', (Math.random()*30-15) + 'deg');
+    fartClouds.appendChild(s);
+    setTimeout(() => s.remove(), 1300);
+  }
+}
+
+function showEgg(egg) {
+  eggBanner.style.display = 'block';
+  eggBanner.textContent = egg.msg;
+  if (egg.color) eggBanner.style.background = egg.color.includes('gradient') ? egg.color : `linear-gradient(135deg, ${egg.color}, ${egg.color}aa)`;
+  eggBanner.style.color = egg.color && egg.color !== '#ffcf00' ? '#fff' : '#1a1a1a';
+  eggBanner.style.animation = 'none';
+  void eggBanner.offsetWidth;
+  eggBanner.style.animation = 'egg-pop 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+  if (egg.badge) {
+    const badge = document.createElement('span');
+    badge.className = 'fart-badge';
+    badge.textContent = egg.badge.label;
+    badge.style.background = egg.badge.bg;
+    badge.style.color = egg.badge.color;
+    badgeRow.appendChild(badge);
+    setTimeout(() => badge.classList.add('earned'), 50);
+  }
+  if (egg.legendary) {
+    synthFart('legendary');
+    // confetti burst
+    if (window.confetti) {
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+    }
+  }
+  setTimeout(() => { eggBanner.style.display = 'none'; }, 4000);
+}
+
+whoopie.addEventListener('click', () => {
+  fartCount++;
+  fartCountEl.textContent = fartCount;
+
+  const type = pickFartType(fartCount);
+  synthFart(type);
+  fartTypeLabel.textContent = fartNames[type] || '💨';
+
+  // Squish animation
+  whoopie.classList.add('squished', 'farting');
+  setTimeout(() => whoopie.classList.remove('squished'), 150);
+  setTimeout(() => whoopie.classList.remove('farting'), 400);
+
+  spawnCloud();
+  updateNextEggHint(fartCount);
+
+  // Easter egg check
+  if (eggMap[fartCount]) {
+    setTimeout(() => showEgg(eggMap[fartCount]), 200);
+  }
+});
+
+updateNextEggHint(0);
 
 </script>
 
