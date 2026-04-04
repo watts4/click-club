@@ -755,54 +755,59 @@
 
 <script>
 // ── Audio Context ──────────────────────────────────────────────
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
 
 function playTone(freq, type = 'sine', duration = 0.3, vol = 0.18) {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
+  const osc = getAudioCtx().createOscillator();
+  const gain = getAudioCtx().createGain();
   osc.connect(gain);
-  gain.connect(audioCtx.destination);
+  gain.connect(getAudioCtx().destination);
   osc.type = type;
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.frequency.setValueAtTime(freq, getAudioCtx().currentTime);
+  gain.gain.setValueAtTime(vol, getAudioCtx().currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, getAudioCtx().currentTime + duration);
   osc.start();
-  osc.stop(audioCtx.currentTime + duration);
+  osc.stop(getAudioCtx().currentTime + duration);
 }
 
 function playPop() {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
+  const osc = getAudioCtx().createOscillator();
+  const gain = getAudioCtx().createGain();
   osc.connect(gain);
-  gain.connect(audioCtx.destination);
+  gain.connect(getAudioCtx().destination);
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.15);
-  gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  osc.frequency.setValueAtTime(800 + Math.random() * 400, getAudioCtx().currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, getAudioCtx().currentTime + 0.15);
+  gain.gain.setValueAtTime(0.12, getAudioCtx().currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, getAudioCtx().currentTime + 0.15);
   osc.start();
-  osc.stop(audioCtx.currentTime + 0.15);
+  osc.stop(getAudioCtx().currentTime + 0.15);
 }
 
 function playClap() {
   // White noise burst
-  const bufferSize = audioCtx.sampleRate * 0.1;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const bufferSize = getAudioCtx().sampleRate * 0.1;
+  const buffer = getAudioCtx().createBuffer(1, bufferSize, getAudioCtx().sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
-  const source = audioCtx.createBufferSource();
+  const source = getAudioCtx().createBufferSource();
   source.buffer = buffer;
-  const gain = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
+  const gain = getAudioCtx().createGain();
+  const filter = getAudioCtx().createBiquadFilter();
   filter.type = 'bandpass';
   filter.frequency.value = 1200;
   source.connect(filter);
   filter.connect(gain);
-  gain.connect(audioCtx.destination);
-  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  gain.connect(getAudioCtx().destination);
+  gain.gain.setValueAtTime(0.3, getAudioCtx().currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, getAudioCtx().currentTime + 0.15);
   source.start();
-  source.stop(audioCtx.currentTime + 0.15);
+  source.stop(getAudioCtx().currentTime + 0.15);
 }
 
 // ── Big Button ─────────────────────────────────────────────────
@@ -1212,17 +1217,17 @@ function synthFart(type) {
   } else if (type === 'wet') {
     for (let b = 0; b < 5; b++) {
       const t = now + b * 0.07;
-      const len = audioCtx.sampleRate * 0.06;
-      const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+      const len = getAudioCtx().sampleRate * 0.06;
+      const buf = getAudioCtx().createBuffer(1, len, getAudioCtx().sampleRate);
       const d = buf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(len*0.3));
-      const src = audioCtx.createBufferSource(); src.buffer = buf;
-      const filter = audioCtx.createBiquadFilter();
+      const src = getAudioCtx().createBufferSource(); src.buffer = buf;
+      const filter = getAudioCtx().createBiquadFilter();
       filter.type = 'lowpass'; filter.frequency.value = 300 + b * 80;
-      const gain = audioCtx.createGain();
+      const gain = getAudioCtx().createGain();
       gain.gain.setValueAtTime(0.3, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-      src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      src.connect(filter); filter.connect(gain); gain.connect(getAudioCtx().destination);
       src.start(t); src.stop(t + 0.1);
     }
 
@@ -1246,17 +1251,17 @@ function synthFart(type) {
     const shots = 6 + Math.floor(Math.random() * 5);
     for (let i = 0; i < shots; i++) {
       const t = now + i * 0.07;
-      const len = Math.floor(audioCtx.sampleRate * 0.055);
-      const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+      const len = Math.floor(getAudioCtx().sampleRate * 0.055);
+      const buf = getAudioCtx().createBuffer(1, len, getAudioCtx().sampleRate);
       const d = buf.getChannelData(0);
       for (let j = 0; j < len; j++) d[j] = (Math.random()*2-1);
-      const src = audioCtx.createBufferSource(); src.buffer = buf;
-      const filter = audioCtx.createBiquadFilter();
+      const src = getAudioCtx().createBufferSource(); src.buffer = buf;
+      const filter = getAudioCtx().createBiquadFilter();
       filter.type = 'bandpass'; filter.frequency.value = 100 + Math.random()*100;
-      const gain = audioCtx.createGain();
+      const gain = getAudioCtx().createGain();
       gain.gain.setValueAtTime(0.35, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-      src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      src.connect(filter); filter.connect(gain); gain.connect(getAudioCtx().destination);
       src.start(t); src.stop(t + 0.07);
     }
 
