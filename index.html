@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Click Club ✨</title>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" integrity="sha384-0esPaJH+F9evp2lsJYN36SW7XkRbaYviuyF+PpnbjDXBC9i1CWGiJyGrXCyiyGqZ" crossorigin="anonymous"></script>
   <style>
     :root {
       --hue: 260;
@@ -1262,8 +1262,7 @@ function synthFart(type) {
 
   } else if (type === 'royal') {
     // Ascending fanfare of farts
-    const freqs = [80, 100, 130, 160];
-    freqs.forEach((f, i) => {
+    [0, 1, 2, 3].forEach(i => {
       setTimeout(() => synthFart('low'), i * 180);
     });
     return; // recursive, skip rest
