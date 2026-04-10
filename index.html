@@ -904,11 +904,14 @@ const notes = [
   { freq: 523.25, label: 'C\'', color: '#ffcf00' },
 ];
 const piano = document.getElementById('piano');
-notes.forEach(n => {
+const pianoKeys = ['a','s','d','f','g','h','j','k'];
+const pianoKeyEls = [];
+notes.forEach((n, i) => {
   const key = document.createElement('button');
   key.className = 'piano-key';
   key.style.background = n.color;
-  key.innerHTML = `<span class="key-label">${n.label}</span>`;
+  const kb = pianoKeys[i] ? pianoKeys[i].toUpperCase() : '';
+  key.innerHTML = `<span class="key-label">${n.label}${kb ? '<br>' + kb : ''}</span>`;
   key.addEventListener('mousedown', () => {
     playTone(n.freq, 'triangle', 0.5, 0.2);
     key.classList.add('pressed');
@@ -916,6 +919,27 @@ notes.forEach(n => {
   key.addEventListener('mouseup', () => key.classList.remove('pressed'));
   key.addEventListener('mouseleave', () => key.classList.remove('pressed'));
   piano.appendChild(key);
+  pianoKeyEls.push(key);
+});
+
+// Keyboard input for piano
+const pianoKeyMap = {};
+pianoKeys.forEach((k, i) => { pianoKeyMap[k] = i; });
+const pianoKeysHeld = new Set();
+document.addEventListener('keydown', (e) => {
+  const idx = pianoKeyMap[e.key.toLowerCase()];
+  if (idx !== undefined && !pianoKeysHeld.has(e.key.toLowerCase())) {
+    pianoKeysHeld.add(e.key.toLowerCase());
+    playTone(notes[idx].freq, 'triangle', 0.5, 0.2);
+    pianoKeyEls[idx].classList.add('pressed');
+  }
+});
+document.addEventListener('keyup', (e) => {
+  const idx = pianoKeyMap[e.key.toLowerCase()];
+  if (idx !== undefined) {
+    pianoKeysHeld.delete(e.key.toLowerCase());
+    pianoKeyEls[idx].classList.remove('pressed');
+  }
 });
 
 // ── Toggles ───────────────────────────────────────────────────
