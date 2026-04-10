@@ -1181,7 +1181,7 @@ const nextEggHint = document.getElementById('next-egg-hint');
 
 // ─── Fart synthesizer ───
 function synthFart(type) {
-  const ctx = audioCtx;
+  const ctx = getAudioCtx();
   const now = ctx.currentTime;
 
   if (type === 'classic') {
