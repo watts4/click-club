@@ -810,16 +810,22 @@ function playClap() {
   source.stop(getAudioCtx().currentTime + 0.15);
 }
 
+// ── localStorage helpers ──────────────────────────────────────
+function loadCount(key) { return parseInt(localStorage.getItem(key), 10) || 0; }
+function saveCount(key, val) { localStorage.setItem(key, val); }
+
 // ── Big Button ─────────────────────────────────────────────────
-let clicks = 0;
+let clicks = loadCount('clickclub_clicks');
 const emojis = ['🎉','🌟','💥','🔥','✨','🎊','🚀','💫','🎈','⚡'];
 const bigBtn = document.getElementById('big-btn');
 const clickCountEl = document.getElementById('click-count');
 const bigBtnEmoji = document.getElementById('big-btn-emoji');
+clickCountEl.textContent = clicks;
 
 bigBtn.addEventListener('click', (e) => {
   clicks++;
   clickCountEl.textContent = clicks;
+  saveCount('clickclub_clicks', clicks);
   bigBtnEmoji.textContent = emojis[clicks % emojis.length];
   playTone(440 + (clicks % 8) * 55, 'triangle', 0.25);
 
@@ -866,13 +872,15 @@ buildBubbles();
 document.getElementById('bubble-reset').addEventListener('click', buildBubbles);
 
 // ── Clap ──────────────────────────────────────────────────────
-let claps = 0;
+let claps = loadCount('clickclub_claps');
 const clapBtn = document.getElementById('clap-btn');
 const clapCount = document.getElementById('clap-count');
+clapCount.textContent = claps;
 
 clapBtn.addEventListener('click', (e) => {
   claps++;
   clapCount.textContent = claps;
+  saveCount('clickclub_claps', claps);
   playClap();
 
   const el = document.createElement('div');
@@ -1170,8 +1178,9 @@ cactusReset.addEventListener('click', () => {
 });
 
 // ── Fart Zone ────────────────────────────────────────────────────
-let fartCount = 0;
+let fartCount = loadCount('clickclub_farts');
 const fartCountEl = document.getElementById('fart-count');
+fartCountEl.textContent = fartCount;
 const fartTypeLabel = document.getElementById('fart-type-label');
 const whoopie = document.getElementById('whoopie');
 const fartClouds = document.getElementById('fart-clouds');
@@ -1401,6 +1410,7 @@ function showEgg(egg) {
 whoopie.addEventListener('click', () => {
   fartCount++;
   fartCountEl.textContent = fartCount;
+  saveCount('clickclub_farts', fartCount);
 
   const type = pickFartType(fartCount);
   synthFart(type);
@@ -1420,7 +1430,7 @@ whoopie.addEventListener('click', () => {
   }
 });
 
-updateNextEggHint(0);
+updateNextEggHint(fartCount);
 
 </script>
 
